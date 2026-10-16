@@ -4,6 +4,8 @@ Small local web UI for building [Karabiner-Elements](https://karabiner-elements.
 
 Pick a key (and modifiers) on the MK-770, pick what it should send on the Mac, save. Each mapping becomes a Karabiner `complex_modifications` rule.
 
+![Key Mapper UI](docs/screenshot.png)
+
 ## Run
 
 ```sh
