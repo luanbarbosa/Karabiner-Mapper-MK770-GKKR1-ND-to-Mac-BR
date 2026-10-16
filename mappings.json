@@ -1,0 +1,554 @@
+{
+  "title": "MK-770 Nordic → MacBook Brazil",
+  "rules": [
+    {
+      "description": "MK: Ctrl → MAC: ⌘ command",
+      "manipulators": [
+        {
+          "type": "basic",
+          "from": {
+            "key_code": "left_control"
+          },
+          "to": [
+            {
+              "key_code": "left_command"
+            }
+          ],
+          "conditions": [
+            {
+              "type": "device_if",
+              "identifiers": [
+                {
+                  "vendor_id": 9494,
+                  "product_id": 469
+                },
+                {
+                  "vendor_id": 9494,
+                  "product_id": 451
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "description": "MK: R⌘ → MAC: ⌥ option",
+      "manipulators": [
+        {
+          "type": "basic",
+          "from": {
+            "key_code": "right_command"
+          },
+          "to": [
+            {
+              "key_code": "right_option"
+            }
+          ],
+          "conditions": [
+            {
+              "type": "device_if",
+              "identifiers": [
+                {
+                  "vendor_id": 9494,
+                  "product_id": 469
+                },
+                {
+                  "vendor_id": 9494,
+                  "product_id": 451
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "description": "MK: R⌘+7 ({) → MAC: ⌥⇧8",
+      "manipulators": [
+        {
+          "type": "basic",
+          "from": {
+            "key_code": "7",
+            "modifiers": {
+              "mandatory": [
+                "right_option"
+              ]
+            }
+          },
+          "to": [
+            {
+              "key_code": "8",
+              "modifiers": [
+                "left_option",
+                "left_shift"
+              ]
+            }
+          ],
+          "conditions": [
+            {
+              "type": "device_if",
+              "identifiers": [
+                {
+                  "vendor_id": 9494,
+                  "product_id": 469
+                },
+                {
+                  "vendor_id": 9494,
+                  "product_id": 451
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "description": "MK: R⌘+0 (}) → MAC: ⌥⇧9",
+      "manipulators": [
+        {
+          "type": "basic",
+          "from": {
+            "key_code": "0",
+            "modifiers": {
+              "mandatory": [
+                "right_option"
+              ]
+            }
+          },
+          "to": [
+            {
+              "key_code": "9",
+              "modifiers": [
+                "left_option",
+                "left_shift"
+              ]
+            }
+          ],
+          "conditions": [
+            {
+              "type": "device_if",
+              "identifiers": [
+                {
+                  "vendor_id": 9494,
+                  "product_id": 469
+                },
+                {
+                  "vendor_id": 9494,
+                  "product_id": 451
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "description": "MK: + → MAC: +",
+      "manipulators": [
+        {
+          "type": "basic",
+          "from": {
+            "key_code": "hyphen"
+          },
+          "to": [
+            {
+              "key_code": "equal_sign"
+            }
+          ],
+          "conditions": [
+            {
+              "type": "device_if",
+              "identifiers": [
+                {
+                  "vendor_id": 9494,
+                  "product_id": 469
+                },
+                {
+                  "vendor_id": 9494,
+                  "product_id": 451
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "description": "MK: ⇧+´ (`) → MAC: '",
+      "manipulators": [
+        {
+          "type": "basic",
+          "from": {
+            "key_code": "equal_sign",
+            "modifiers": {
+              "mandatory": [
+                "shift"
+              ]
+            }
+          },
+          "to": [
+            {
+              "key_code": "hyphen"
+            }
+          ],
+          "conditions": [
+            {
+              "type": "device_if",
+              "identifiers": [
+                {
+                  "vendor_id": 9494,
+                  "product_id": 469
+                },
+                {
+                  "vendor_id": 9494,
+                  "product_id": 451
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "description": "MK: ´ → MAC: \\",
+      "manipulators": [
+        {
+          "type": "basic",
+          "from": {
+            "key_code": "equal_sign"
+          },
+          "to": [
+            {
+              "key_code": "backslash"
+            }
+          ],
+          "conditions": [
+            {
+              "type": "device_if",
+              "identifiers": [
+                {
+                  "vendor_id": 9494,
+                  "product_id": 469
+                },
+                {
+                  "vendor_id": 9494,
+                  "product_id": 451
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "description": "MK: R⌘+´ (|) → MAC: ⇧\\",
+      "manipulators": [
+        {
+          "type": "basic",
+          "from": {
+            "key_code": "equal_sign",
+            "modifiers": {
+              "mandatory": [
+                "right_option"
+              ]
+            }
+          },
+          "to": [
+            {
+              "key_code": "backslash",
+              "modifiers": [
+                "left_shift"
+              ]
+            }
+          ],
+          "conditions": [
+            {
+              "type": "device_if",
+              "identifiers": [
+                {
+                  "vendor_id": 9494,
+                  "product_id": 469
+                },
+                {
+                  "vendor_id": 9494,
+                  "product_id": 451
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "description": "MK: å → MAC: ~ then A",
+      "manipulators": [
+        {
+          "type": "basic",
+          "from": {
+            "key_code": "open_bracket"
+          },
+          "to": [
+            {
+              "key_code": "quote"
+            },
+            {
+              "key_code": "a"
+            }
+          ],
+          "conditions": [
+            {
+              "type": "device_if",
+              "identifiers": [
+                {
+                  "vendor_id": 9494,
+                  "product_id": 469
+                },
+                {
+                  "vendor_id": 9494,
+                  "product_id": 451
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "description": "MK: Win → MAC: Mission",
+      "manipulators": [
+        {
+          "type": "basic",
+          "from": {
+            "key_code": "left_option"
+          },
+          "to": [
+            {
+              "apple_vendor_keyboard_key_code": "mission_control"
+            }
+          ],
+          "conditions": [
+            {
+              "type": "device_if",
+              "identifiers": [
+                {
+                  "vendor_id": 9494,
+                  "product_id": 469
+                },
+                {
+                  "vendor_id": 9494,
+                  "product_id": 451
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "description": "MK: ¨ → MAC: ⇧~",
+      "manipulators": [
+        {
+          "type": "basic",
+          "from": {
+            "key_code": "close_bracket"
+          },
+          "to": [
+            {
+              "key_code": "quote",
+              "modifiers": [
+                "left_shift"
+              ]
+            }
+          ],
+          "conditions": [
+            {
+              "type": "device_if",
+              "identifiers": [
+                {
+                  "vendor_id": 9494,
+                  "product_id": 469
+                },
+                {
+                  "vendor_id": 9494,
+                  "product_id": 451
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "description": "MK: ⇧+¨ (^) → MAC: ~",
+      "manipulators": [
+        {
+          "type": "basic",
+          "from": {
+            "key_code": "close_bracket",
+            "modifiers": {
+              "mandatory": [
+                "shift"
+              ]
+            }
+          },
+          "to": [
+            {
+              "key_code": "quote"
+            }
+          ],
+          "conditions": [
+            {
+              "type": "device_if",
+              "identifiers": [
+                {
+                  "vendor_id": 9494,
+                  "product_id": 469
+                },
+                {
+                  "vendor_id": 9494,
+                  "product_id": 451
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "description": "MK: ö → MAC: ç",
+      "manipulators": [
+        {
+          "type": "basic",
+          "from": {
+            "key_code": "semicolon"
+          },
+          "to": [
+            {
+              "key_code": "semicolon"
+            }
+          ],
+          "conditions": [
+            {
+              "type": "device_if",
+              "identifiers": [
+                {
+                  "vendor_id": 9494,
+                  "product_id": 469
+                },
+                {
+                  "vendor_id": 9494,
+                  "product_id": 451
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "description": "MK: ä → MAC: ´",
+      "manipulators": [
+        {
+          "type": "basic",
+          "from": {
+            "key_code": "quote"
+          },
+          "to": [
+            {
+              "key_code": "close_bracket"
+            }
+          ],
+          "conditions": [
+            {
+              "type": "device_if",
+              "identifiers": [
+                {
+                  "vendor_id": 9494,
+                  "product_id": 469
+                },
+                {
+                  "vendor_id": 9494,
+                  "product_id": 451
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "description": "MK: ⇧+ä (Ä) → MAC: ⇧´",
+      "manipulators": [
+        {
+          "type": "basic",
+          "from": {
+            "key_code": "quote",
+            "modifiers": {
+              "mandatory": [
+                "shift"
+              ]
+            }
+          },
+          "to": [
+            {
+              "key_code": "close_bracket",
+              "modifiers": [
+                "left_shift"
+              ]
+            }
+          ],
+          "conditions": [
+            {
+              "type": "device_if",
+              "identifiers": [
+                {
+                  "vendor_id": 9494,
+                  "product_id": 469
+                },
+                {
+                  "vendor_id": 9494,
+                  "product_id": 451
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "description": "MK: ' → MAC: ⇧+",
+      "manipulators": [
+        {
+          "type": "basic",
+          "from": {
+            "key_code": "backslash"
+          },
+          "to": [
+            {
+              "key_code": "equal_sign",
+              "modifiers": [
+                "left_shift"
+              ]
+            }
+          ],
+          "conditions": [
+            {
+              "type": "device_if",
+              "identifiers": [
+                {
+                  "vendor_id": 9494,
+                  "product_id": 469
+                },
+                {
+                  "vendor_id": 9494,
+                  "product_id": 451
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

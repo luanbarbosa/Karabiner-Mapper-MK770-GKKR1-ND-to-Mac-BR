@@ -1,0 +1,555 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Key Mapper</title>
+<style>
+:root{--bg:#121419;--p:#1b1e25;--b:#2d323c;--t:#e6e8ee;--m:#8b93a3;--ac:#7c5cff;--ac2:#2d2a52;--ok:#2fbf71;--okbg:#1d3127;--warn:#f0b429;--bad:#ff6b6b;--key:#232733;--keyb:#3a4050}
+*{box-sizing:border-box}
+body{margin:0 auto;max-width:1280px;padding:16px 20px 60px;background:var(--bg);color:var(--t);font:14px/1.45 system-ui,-apple-system,sans-serif}
+h1{font-size:19px;margin:0}h2{font-size:14px;margin:0;text-transform:uppercase;letter-spacing:.06em;color:var(--m)}
+.top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.p{background:var(--p);border:1px solid var(--b);border-radius:10px;padding:14px;margin:12px 0}
+.ph{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+.hint{color:var(--m);font-size:12.5px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+input,select,button{font:inherit;color:var(--t);background:#242833;border:1px solid var(--b);border-radius:6px;padding:5px 10px}
+button{cursor:pointer}button:hover{border-color:var(--ac)}
+button.pri{background:var(--ac);border-color:var(--ac);color:#fff}
+button.on{background:var(--ac2);border-color:var(--ac)}
+button:disabled{opacity:.4;cursor:default}
+.seg{display:inline-flex;border:1px solid var(--b);border-radius:7px;overflow:hidden}
+.seg button{border:0;border-radius:0;background:transparent;padding:5px 10px}
+.seg button.on{background:var(--ac);color:#fff}
+.kbwrap{overflow-x:auto;padding:2px 0 4px}
+.kb{position:relative}
+.key{position:absolute;border:1px solid var(--keyb);border-radius:6px;background:var(--key);cursor:pointer;overflow:hidden;color:#cfd3dc;user-select:none}
+.key:hover{border-color:var(--ac)}
+.key.mod-on{background:#4a3f99;border-color:#a28dff}
+.key.sel{outline:2px solid var(--ac);outline-offset:1px;background:var(--ac2)}
+.key.mapped{border-color:var(--ok)}
+.key.mapped::after{content:"";position:absolute;top:4px;right:4px;width:6px;height:6px;border-radius:50%;background:var(--ok)}
+.key.dis{opacity:.35;cursor:not-allowed}
+.key .c{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:11.5px;text-align:center;line-height:1.1;padding:2px}
+.key .s{position:absolute;top:2px;left:5px;font-size:11px;color:#aab}
+.key .b{position:absolute;left:5px;bottom:2px;font-size:14px;font-weight:600}
+.key .b.mid{left:0;right:0;bottom:auto;top:50%;transform:translateY(-50%);text-align:center}
+.key .a{position:absolute;right:4px;bottom:2px;font-size:10.5px;color:#8fc8ff}
+.key .o{position:absolute;left:0;right:0;bottom:0;background:var(--okbg);color:var(--ok);font-size:10.5px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 2px}
+.composer{display:grid;grid-template-columns:1fr auto 1fr;gap:14px;align-items:stretch}
+.side{border:1px solid var(--b);border-radius:8px;padding:10px;min-height:96px}
+.side h3{margin:0 0 6px;font-size:12px;color:var(--m);font-weight:500}
+.arrow{display:flex;align-items:center;font-size:26px;color:var(--m)}
+.combo{font-size:22px;font-weight:700;display:flex;gap:6px;align-items:center;flex-wrap:wrap;min-height:34px}
+.chip{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--b);background:#242833;border-radius:6px;padding:2px 8px;font-size:16px;font-weight:600}
+.chip.cur{border-color:var(--ac);background:var(--ac2)}
+.chip x{cursor:pointer;color:var(--m);font-size:12px;margin-left:2px}
+.types{color:var(--m);font-size:13px;margin-top:4px}.types b{color:var(--t);font-size:16px}
+.msg{min-height:1.3em;margin-top:8px;font-size:13px}.msg.err{color:var(--bad)}.msg.ok{color:var(--ok)}.msg.warn{color:var(--warn)}
+table{width:100%;border-collapse:collapse}
+td,th{padding:6px 8px;border-bottom:1px solid var(--b);text-align:left;font-size:13px;vertical-align:middle}
+th{color:var(--m);font-weight:500}
+tr.editing td{background:var(--ac2)}
+tr.dup td{background:#3a2020}
+td .big{font-size:15px;font-weight:600}
+code{background:#242833;padding:1px 5px;border-radius:4px;font-size:12px}
+pre{max-height:360px;overflow:auto;background:#0e1014;border:1px solid var(--b);border-radius:8px;padding:10px;font-size:12px;margin:8px 0 0}
+details summary{cursor:pointer;color:var(--m)}
+.status{font-size:12.5px;color:var(--m)}.status.ok{color:var(--ok)}.status.err{color:var(--bad)}
+textarea{width:100%;height:60px;font:inherit;color:var(--t);background:#242833;border:1px solid var(--b);border-radius:6px;padding:8px}
+ol{margin:6px 0 0 18px;padding:0}li{margin:2px 0}
+</style>
+</head>
+<body>
+<div class="top">
+  <div>
+    <h1>MK-770 Nordic → MacBook Brazil</h1>
+    <div class="hint">Pick a key on the MK-770, pick what it should send on the Mac, save. Each mapping becomes one Karabiner rule in <code>mappings.json</code>.</div>
+  </div>
+  <div class="row">
+    <span class="status" id="status">loading…</span>
+    <span class="hint">Keyboard input picks:</span>
+    <div class="seg" id="inmode">
+      <button data-m="source">MK-770 key</button><button data-m="target">Mac target</button><button data-m="off">Off</button>
+    </div>
+  </div>
+</div>
+
+<div class="p">
+  <div class="ph"><h2>1 · MK-770 (source)</h2>
+    <div class="row"><span class="hint">Layer shown:</span><div class="seg" id="layer"></div></div>
+  </div>
+  <div class="kbwrap"><div class="kb" id="mk"></div></div>
+  <div class="hint">Click a key to map it. Click Shift / right_command / Ctrl here to add them to the source combo. Green dot = mapped in the layer shown; the strip shows what it sends.</div>
+</div>
+
+<div class="p">
+  <div class="ph"><h2>2 · MacBook Brazil (target)</h2>
+    <div class="row">
+      <button id="addStep" title="Send several keystrokes in a row, e.g. dead key then space">+ keystroke</button>
+      <button id="addSpace" title="Append a Space keystroke (finishes a dead key)">+ Space</button>
+    </div>
+  </div>
+  <div class="kbwrap"><div class="kb" id="mac"></div></div>
+  <div class="hint">Click a key to set the target. Click ⇧ ⌥ ⌘ ⌃ fn to toggle modifiers on it (when the source is itself a modifier key, clicking a Mac modifier makes it the target). F-keys send the printed Mac function; add <b>fn</b> for a plain F-key.</div>
+</div>
+
+<div class="p">
+  <div class="composer">
+    <div class="side"><h3>From MK-770</h3><div class="combo" id="fromCombo"></div><div class="types" id="fromTypes"></div></div>
+    <div class="arrow">→</div>
+    <div class="side"><h3>To Mac</h3><div class="combo" id="toCombo"></div><div class="types" id="toTypes"></div></div>
+  </div>
+  <div class="row" style="margin-top:10px">
+    <button class="pri" id="save">Save mapping</button>
+    <button id="clear">Clear</button>
+    <label class="hint"><input type="checkbox" id="anyMods"> also match when other modifiers are held (<code>optional: any</code>)</label>
+    <span class="hint" id="fromCodeWrap"></span>
+  </div>
+  <div class="msg" id="msg"></div>
+</div>
+
+<div class="p">
+  <div class="ph"><h2>3 · Rules in mappings.json</h2>
+    <div class="row">
+      <input id="filter" placeholder="filter…" style="width:160px">
+      <button id="copyRule" title="All mappings merged into one rule, for Karabiner → Complex Modifications → Add your own rule">Copy JSON</button>
+      <button id="download" title="Download the one-rule JSON, for Karabiner → Add your own rule">Download JSON</button>
+      <button id="install" class="pri">Copy to Karabiner assets</button>
+    </div>
+  </div>
+  <table><thead><tr><th>MK-770</th><th>types</th><th></th><th>Mac</th><th>gives</th><th></th></tr></thead><tbody id="rules"></tbody></table>
+  <div class="hint" id="ruleStat" style="margin-top:6px"></div>
+</div>
+
+<div class="p">
+  <div class="ph"><h2>4 · Device &amp; Karabiner</h2></div>
+  <div class="row">
+    <label class="hint"><input type="checkbox" id="devOnly"> only apply to MK-770 (<span id="devList"></span>)</label>
+    <label class="hint">right_command key code <input id="right_command" style="width:130px"></label>
+  </div>
+  <ol class="hint">
+    <li><b>Copy to Karabiner assets</b> writes <code id="assetPath"></code>.</li>
+    <li>Karabiner-Elements → Complex Modifications → <b>Add predefined rule</b> → enable the rules you want (one per mapping).</li>
+    <li>After editing a mapping, copy again and re-add that rule in Karabiner (enabled rules are copies).</li>
+    <li>If a key is not detected correctly, check its real key_code in Karabiner <b>EventViewer</b> and fix it in the “source key_code” field.</li>
+  </ol>
+  <textarea id="test" placeholder="Test area — type here on the MK-770"></textarea>
+  <details><summary>Raw JSON</summary><pre id="raw"></pre></details>
+</div>
+
+<script>
+const U=40;
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* ---------- MK-770 Nordic layout (source) ----------
+   key id = default Karabiner key_code it sends; legend = [base, shift, right_command] */
+const MKL={
+ grave_accent_and_tilde:['§','½',''],'1':['1','!',''],'2':['2','"','@'],'3':['3','#','£'],'4':['4','¤','$'],
+ '5':['5','%',''],'6':['6','&',''],'7':['7','/','{'],'8':['8','(','['],'9':['9',')',']'],'0':['0','=','}'],
+ hyphen:['+','?','\\'],equal_sign:['´','`','|'],open_bracket:['å','Å',''],close_bracket:['¨','^','~'],
+ semicolon:['ö','Ö',''],quote:['ä','Ä',''],backslash:["'",'*',''],non_us_backslash:['<','>','|'],
+ comma:[',',';',''],period:['.',':',''],slash:['-','_','']
+};
+'qwertyuiopasdfghjklzxcvbnm'.split('').forEach(c=>MKL[c]=[c,c.toUpperCase(),'']);MKL.e[2]='€';
+const MKCAP={escape:'Esc',delete_forward:'Del',insert:'Ins',page_up:'PgUp',page_down:'PgDn',delete_or_backspace:'⌫',
+ tab:'Tab',return_or_enter:'Enter',caps_lock:'Caps Lk',left_shift:'⇧ Shift',right_shift:'⇧ Shift',left_control:'Ctrl',
+ left_option:'⌥ | Win',left_command:'⌘ | Alt',spacebar:'',right_command:'R⌘<br>⌘ | Alt',mk_logo:'CM',right_control:'Ctrl',
+ left_arrow:'←',right_arrow:'→',up_arrow:'↑',down_arrow:'↓',keypad_num_lock:'Num',keypad_slash:'/',keypad_asterisk:'*',
+ keypad_hyphen:'−',keypad_plus:'+',keypad_enter:'Enter',keypad_period:'.',knob:'◉'};
+for(let i=1;i<=12;i++)MKCAP['f'+i]='F'+i;
+for(let i=0;i<=9;i++)MKCAP['keypad_'+i]=String(i);
+const MK_ROWS=[
+ 'escape:1 f1:1 f2:1 f3:1 f4:1 f5:1 f6:1 f7:1 f8:1 f9:1 f10:1 f11:1 f12:1 delete_forward:1 insert:1 _0.25 page_up:1 page_down:1 knob:1',
+ 'grave_accent_and_tilde:1 1:1 2:1 3:1 4:1 5:1 6:1 7:1 8:1 9:1 0:1 hyphen:1 equal_sign:1 delete_or_backspace:2 _0.25 keypad_num_lock:1 keypad_slash:1 keypad_asterisk:1 keypad_hyphen:1',
+ 'tab:1.5 q:1 w:1 e:1 r:1 t:1 y:1 u:1 i:1 o:1 p:1 open_bracket:1 close_bracket:1 _0.25 return_or_enter:1.25:2 _0.25 keypad_7:1 keypad_8:1 keypad_9:1 keypad_plus:1:2',
+ 'caps_lock:1.75 a:1 s:1 d:1 f:1 g:1 h:1 j:1 k:1 l:1 semicolon:1 quote:1 backslash:1 _1.5 keypad_4:1 keypad_5:1 keypad_6:1',
+ 'left_shift:1.25 non_us_backslash:1 z:1 x:1 c:1 v:1 b:1 n:1 m:1 comma:1 period:1 slash:1 right_shift:1.75 _0.25 up_arrow:1 _0.25 keypad_1:1 keypad_2:1 keypad_3:1 keypad_enter:1:2',
+ 'left_control:1.25 left_option:1.25 left_command:1.25 spacebar:5.75 right_command:1 mk_logo:1 right_control:1 _0.25 left_arrow:1 down_arrow:1 right_arrow:1 _0.25 keypad_0:2 keypad_period:1'
+];
+
+/* ---------- MacBook Brazil layout (target) ----------
+   legend = [base, shift, small printed (usually ⌥)] */
+const MACL={
+ grave_accent_and_tilde:['§','±',''],'1':['1','!',''],'2':['2','"','@'],'3':['3','#','€'],'4':['4','$',''],'5':['5','%',''],
+ '6':['6','&',''],'7':['7','/',''],'8':['8','(',''],'9':['9',')',''],'0':['0','=',''],hyphen:["'",'?',''],equal_sign:['+','*',''],
+ open_bracket:['º','ª',''],close_bracket:['´','`',''],semicolon:['ç','Ç',''],quote:['~','^',''],backslash:['\\','|',''],
+ non_us_backslash:['<','>',''],comma:[',',';',''],period:['.',':',''],slash:['-','_','']
+};
+'qwertyuiopasdfghjklzxcvbnm'.split('').forEach(c=>MACL[c]=[c,c.toUpperCase(),'']);
+const MACF=[['consumer','display_brightness_decrement','☼−'],['consumer','display_brightness_increment','☼+'],['apple','mission_control','Mission'],
+ ['apple','spotlight','Spotlight'],['consumer','dictation','Dictation'],['consumer','do_not_disturb','Focus'],['consumer','rewind','⏪'],
+ ['consumer','play_or_pause','⏯'],['consumer','fast_forward','⏩'],['consumer','mute','Mute'],['consumer','volume_decrement','Vol−'],['consumer','volume_increment','Vol+']];
+const MACCAP={escape:'esc',delete_or_backspace:'⌫',tab:'⇥',return_or_enter:'↩',caps_lock:'⇪',left_shift:'⇧',right_shift:'⇧',
+ fn:'fn 🌐',left_control:'⌃ control',left_option:'⌥ option',left_command:'⌘ command',spacebar:'',right_command:'⌘ command',
+ right_option:'⌥ option',left_arrow:'◀',right_arrow:'▶',up_arrow:'▲',down_arrow:'▼'};
+MACF.forEach((f,i)=>MACCAP['f'+(i+1)]=`<small>${f[2]}</small><br>F${i+1}`);
+const MAC_ROWS=[
+ 'escape:1.5 f1:1.125 f2:1.125 f3:1.125 f4:1.125 f5:1.125 f6:1.125 f7:1.125 f8:1.125 f9:1.125 f10:1.125 f11:1.125 f12:1.125',
+ 'grave_accent_and_tilde:1 1:1 2:1 3:1 4:1 5:1 6:1 7:1 8:1 9:1 0:1 hyphen:1 equal_sign:1 delete_or_backspace:2',
+ 'tab:1.5 q:1 w:1 e:1 r:1 t:1 y:1 u:1 i:1 o:1 p:1 open_bracket:1 close_bracket:1 return_or_enter:1.5:2',
+ 'caps_lock:1.75 a:1 s:1 d:1 f:1 g:1 h:1 j:1 k:1 l:1 semicolon:1 quote:1 backslash:1',
+ 'left_shift:1.25 non_us_backslash:1 z:1 x:1 c:1 v:1 b:1 n:1 m:1 comma:1 period:1 slash:1 right_shift:2.75',
+ 'fn:1 left_control:1 left_option:1 left_command:1.25 spacebar:5 right_command:1.25 right_option:1 left_arrow:1 up_arrow:1:0.5 down_arrow:1:0.5:0.5 right_arrow:1'
+];
+
+function layout(rows){
+ const keys=[];let maxX=0;
+ rows.forEach((r,ri)=>{let x=0;const y=ri*U+(ri?8:0);
+  r.split(' ').forEach(t=>{
+   if(t[0]==='_'){x+=+t.slice(1);return}
+   const [id,w,h,dy]=t.split(':');
+   keys.push({id,x:x*U,y:y+(+(dy||0))*U,w:+w*U,h:(+(h||1))*U});
+   if(id!=='down_arrow')x+=+w; maxX=Math.max(maxX,x);
+  });
+ });
+ return {keys,w:maxX*U,h:rows.length*U+8};
+}
+const MK=layout(MK_ROWS),MAC=layout(MAC_ROWS);
+// up/down arrows share one column on the Mac
+{const up=MAC.keys.find(k=>k.id==='up_arrow'),dn=MAC.keys.find(k=>k.id==='down_arrow'),rt=MAC.keys.find(k=>k.id==='right_arrow');dn.x=up.x;rt.x=up.x+U;}
+
+const MODIDS=['left_shift','right_shift','left_control','right_control','left_option','right_option','left_command','right_command','caps_lock','fn'];
+const isMod=id=>MODIDS.includes(id);
+
+/* ---------- state ---------- */
+let M={title:'MK-770 Nordic → MacBook Brazil',rules:[]},C={devices:[],right_command:'right_command',codes:{},deviceOnly:true};
+let src={id:null,mods:[]},steps=[{mods:[]}],cur=0,editIdx=null,anyMods=false,viewLayer='base',inMode='source',lastChar='',msgT={t:'',k:''};
+let assetPath='';
+
+const code=id=>C.codes[id]||id;
+const mkIdByCode=kc=>MK.keys.find(k=>code(k.id)===kc)?.id;
+// MK modifier key -> Karabiner "mandatory" token
+function srcModToken(id){
+ if(id==='left_shift'||id==='right_shift')return 'shift';
+ if(id==='left_control'||id==='right_control')return 'control';
+ if(id==='right_command')return C.right_command||'right_command';
+ return code(id);
+}
+const SYM={shift:'⇧',left_shift:'⇧',right_shift:'R⇧',control:'⌃',left_control:'⌃',right_control:'R⌃',option:'⌥',left_option:'⌥',right_option:'R⌥',command:'⌘',left_command:'⌘',right_command:'R⌘',fn:'fn',caps_lock:'⇪'};
+const srcModSym=t=>t===(C.right_command||'right_command')?'right_command':t==='left_option'?'Win':t==='left_command'?'Alt':SYM[t]||t;
+const ORDER=['control','left_control','right_control','option','left_option','right_option','shift','left_shift','right_shift','command','left_command','right_command','fn'];
+const sortMods=a=>[...a].sort((x,y)=>ORDER.indexOf(x)-ORDER.indexOf(y));
+
+const canon=m=>m.replace(/^(left|right)_(shift|control)$/,'$2');
+function mkLayerOf(mods){
+ if(!mods.length)return 0;
+ if(mods.length===1&&canon(mods[0])==='shift')return 1;
+ if(mods.length===1&&mods[0]===(C.right_command||'right_command'))return 2;
+ return -1;
+}
+function mkTypes(id,mods){const l=mkLayerOf(mods),k=MKL[mkIdFromCodeOrId(id)];return l<0||!k?'':k[l]}
+function mkIdFromCodeOrId(x){return MKL[x]?x:(mkIdByCode(x)||x)}
+function mkKeyName(id){const k=MKL[id];return k?(/^[a-z]$/.test(id)?id.toUpperCase():k[0]):(MKCAP[id]||id).replace(/<br>.*/,'')}
+
+function macKeyName(kc){if(/^f\d+$/.test(kc))return kc.toUpperCase();const k=MACL[kc];return k?(/^[a-z]$/.test(kc)?kc.toUpperCase():k[0]):(MACCAP[kc]||kc).replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim()}
+function macGives(st){
+ if(st.special)return '';
+ const k=MACL[st.kc];if(!k)return '';
+ const m=st.mods.filter(x=>x!=='caps_lock');
+ if(!m.length)return k[0];
+ if(m.length===1&&/shift/.test(m[0]))return k[1];
+ if(m.length===1&&/option/.test(m[0]))return k[2];
+ return '';
+}
+function stepLabel(st){
+ if(st.special){const f=MACF.find(f=>f[1]===st.special[1]);return f?f[2].replace(/<[^>]+>/g,''):st.special[1]}
+ if(!st.kc)return '?';
+ return st.mods.map(m=>SYM[m]||m).join('')+macKeyName(st.kc);
+}
+
+/* ---------- Karabiner conversion ---------- */
+function toEvents(){
+ return steps.filter(s=>s.kc||s.special).map(s=>{
+  if(s.special)return s.special[0]==='apple'?{apple_vendor_keyboard_key_code:s.special[1]}:{consumer_key_code:s.special[1]};
+  const o={key_code:s.kc};if(s.mods.length)o.modifiers=sortMods(s.mods);return o;
+ });
+}
+function fromEventsTo(arr){
+ return (arr||[]).map(e=>{
+  if(e.consumer_key_code)return {special:['consumer',e.consumer_key_code],mods:[]};
+  if(e.apple_vendor_keyboard_key_code)return {special:['apple',e.apple_vendor_keyboard_key_code],mods:[]};
+  const m=e.modifiers?(Array.isArray(e.modifiers)?e.modifiers:[e.modifiers]):[];
+  return {kc:e.key_code,mods:m};
+ });
+}
+function conditions(){
+ if(!C.deviceOnly||!C.devices.length)return null;
+ return [{type:'device_if',identifiers:C.devices.map(d=>({vendor_id:+d.vendor_id,product_id:+d.product_id}))}];
+}
+// Rule title: "MK: <combo> (<char typed>) → MAC: <keys>", char part dropped when it adds nothing
+const MKNAME={left_option:'Win',left_command:'Alt',right_command:'R⌘'};
+function describe(fromKc,mods,to){
+ const id=mkIdFromCodeOrId(fromKc),types=mkTypes(fromKc,mods);
+ const modName=t=>t===(C.right_command||'right_command')?'R⌘':srcModSym(t);
+ const src=[...mods.map(modName),MKNAME[id]||mkKeyName(id)].join('+');
+ const dst=fromEventsTo(to).map(stepLabel).join(' then ');
+ return `MK: ${src}${types&&types!==src?` (${types})`:''} → MAC: ${dst}`;
+}
+function makeRule(fromKc,mods,to,any){
+ const from={key_code:fromKc},ms={};
+ if(mods.length)ms.mandatory=sortMods(mods);
+ if(any)ms.optional=['any'];
+ if(Object.keys(ms).length)from.modifiers=ms;
+ const man={type:'basic',from,to};
+ const c=conditions();if(c)man.conditions=c;
+ return {description:describe(fromKc,mods,to),manipulators:[man]};
+}
+function parseRule(r){
+ const m=r.manipulators[0],f=m.from||{},fm=f.modifiers||{};
+ const mand=fm.mandatory?(Array.isArray(fm.mandatory)?fm.mandatory:[fm.mandatory]):[];
+ const opt=fm.optional?(Array.isArray(fm.optional)?fm.optional:[fm.optional]):[];
+ return {kc:f.key_code,mods:mand,any:opt.includes('any'),to:m.to||[]};
+}
+const ruleKey=p=>p.kc+'|'+sortMods(p.mods.map(canon)).join(',');
+// rebuild every rule so device conditions/descriptions stay consistent
+function normalize(){
+ const flat=[];
+ M.rules.forEach(r=>(r.manipulators||[]).forEach(man=>flat.push({manipulators:[man]})));
+ M.rules=flat.map(r=>{const p=parseRule(r);return p.kc?makeRule(p.kc,p.mods,p.to,p.any):r});
+}
+
+/* ---------- persistence ---------- */
+let saveTimer;
+function setStatus(t,k){const s=$('#status');s.textContent=t;s.className='status '+(k||'')}
+function persist(){
+ clearTimeout(saveTimer);setStatus('saving…');
+ saveTimer=setTimeout(async()=>{
+  try{
+   const r=await fetch('/api/mappings',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(M)});
+   if(!r.ok)throw new Error((await r.json()).error);
+   setStatus('saved to mappings.json','ok');
+  }catch(e){setStatus('save failed: '+e.message,'err')}
+ },250);
+}
+async function persistConfig(){
+ await fetch('/api/config',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(C)});
+ normalize();persist();render();
+}
+
+/* ---------- rendering ---------- */
+function setMsg(t,k){msgT={t,k};$('#msg').textContent=t;$('#msg').className='msg '+(k||'')}
+const layerMods=()=>viewLayer==='base'?[]:viewLayer==='shift'?['shift']:[C.right_command||'right_command'];
+function ruleFor(kc,mods){const k=ruleKey({kc,mods});return M.rules.findIndex(r=>r.manipulators&&ruleKey(parseRule(r))===k)}
+
+function renderMk(){
+ const lm=layerMods();
+ const el=$('#mk');el.style.width=MK.w+'px';el.style.height=MK.h+'px';
+ el.innerHTML=MK.keys.map(k=>{
+  const id=k.id,leg=MKL[id],dis=id==='mk_logo'||id==='knob';
+  const modOn=isMod(id)&&src.id&&!isMod(src.id)&&src.mods.includes(srcModToken(id));
+  const ri=dis?-1:ruleFor(code(id),isMod(id)?[]:lm);
+  let inner;
+  if(leg){
+   inner=/^[a-z]$/.test(id)?`<span class="b mid">${esc(leg[1])}</span>`:`<i class="s">${esc(leg[1])}</i><span class="b">${esc(leg[0])}</span>`;
+   if(leg[2])inner+=`<i class="a">${esc(leg[2])}</i>`;
+  }else inner=`<span class="c">${MKCAP[id]??esc(id)}</span>`;
+  if(ri>=0){const st=fromEventsTo(parseRule(M.rules[ri]).to);inner+=`<span class="o">${esc((st.length===1&&macGives(st[0]))||st.map(stepLabel).join(' '))}</span>`}
+  return `<div class="key ${dis?'dis':''} ${src.id===id?'sel':''} ${modOn?'mod-on':''} ${ri>=0?'mapped':''}" data-mk="${id}" title="${esc(code(id))}" style="left:${k.x}px;top:${k.y}px;width:${k.w-4}px;height:${k.h-4}px">${inner}</div>`;
+ }).join('');
+ $('#layer').innerHTML=[['base','Base'],['shift','⇧ Shift'],['right_command','right_command']].map(([v,n])=>`<button data-l="${v}" class="${viewLayer===v?'on':''}">${n}</button>`).join('');
+}
+function renderMac(){
+ const st=steps[cur]||{mods:[]};
+ const el=$('#mac');el.style.width=MAC.w+'px';el.style.height=MAC.h+'px';
+ const srcIsMod=src.id&&isMod(src.id);
+ el.innerHTML=MAC.keys.map(k=>{
+  const id=k.id,leg=MACL[id];
+  const fIdx=/^f\d+$/.test(id)?+id.slice(1)-1:-1;
+  const selected=st.special?(fIdx>=0&&MACF[fIdx][1]===st.special[1]):st.kc===id;
+  const modOn=isMod(id)&&!srcIsMod&&st.mods.includes(macModToken(id));
+  let inner;
+  if(leg){
+   inner=/^[a-z]$/.test(id)?`<span class="b mid">${esc(leg[1])}</span>`:`<i class="s">${esc(leg[1])}</i><span class="b">${esc(leg[0])}</span>`;
+   if(leg[2])inner+=`<i class="a">${esc(leg[2])}</i>`;
+  }else inner=`<span class="c">${MACCAP[id]??esc(id)}</span>`;
+  return `<div class="key ${selected?'sel':''} ${modOn?'mod-on':''}" data-mac="${id}" title="${id}" style="left:${k.x}px;top:${k.y}px;width:${k.w-4}px;height:${k.h-4}px">${inner}</div>`;
+ }).join('');
+}
+const macModToken=id=>id==='fn'?'fn':id.replace(/^right_/,'left_');
+
+function renderComposer(){
+ const fc=$('#fromCombo');
+ if(!src.id){fc.innerHTML='<span class="hint">click a key on the MK-770</span>';$('#fromTypes').textContent='';$('#fromCodeWrap').innerHTML=''}
+ else{
+  fc.innerHTML=[...sortMods(src.mods).map(m=>`<span class="chip">${esc(srcModSym(m))}<x data-rm-src="${m}">✕</x></span>`),`<span class="chip cur">${esc(mkKeyName(src.id))}</span>`].join('<span class="hint">+</span>');
+  const t=isMod(src.id)?'':mkTypes(src.id,src.mods);
+  $('#fromTypes').innerHTML=t?`keycap says <b>${esc(t)}</b>`:(src.mods.length?'custom combo':'');
+  $('#fromCodeWrap').innerHTML=`source key_code <input id="kc" value="${esc(code(src.id))}" style="width:180px">`;
+ }
+ $('#toCombo').innerHTML=steps.map((s,i)=>`<span class="chip ${i===cur?'cur':''}" data-step="${i}">${esc(stepLabel(s))}${steps.length>1?`<x data-rm-step="${i}">✕</x>`:''}</span>`).join('<span class="hint">then</span>');
+ const g=steps.length===1?macGives(steps[0]):'';
+ $('#toTypes').innerHTML=g?`keycap says <b>${esc(g)}</b>`:(lastChar?`last recorded: <b>${esc(lastChar)}</b>`:'');
+ $('#anyMods').checked=anyMods;
+ $('#save').textContent=editIdx!=null?'Update mapping':'Save mapping';
+}
+function renderRules(){
+ const f=$('#filter').value.trim().toLowerCase();
+ const seen={};M.rules.forEach(r=>{const k=ruleKey(parseRule(r));seen[k]=(seen[k]||0)+1});
+ $('#rules').innerHTML=M.rules.map((r,i)=>{
+  if(f&&!r.description.toLowerCase().includes(f))return '';
+  const p=parseRule(r),id=mkIdFromCodeOrId(p.kc),st=fromEventsTo(p.to);
+  const gives=st.length===1?macGives(st[0]):'';
+  return `<tr class="${editIdx===i?'editing':''} ${seen[ruleKey(p)]>1?'dup':''}" title="${esc(r.description)}">
+   <td><span class="big">${esc([...p.mods.map(srcModSym),mkKeyName(id)].join(' + '))}</span>${p.any?' <span class="hint">+any</span>':''}</td>
+   <td class="big">${esc(mkTypes(p.kc,p.mods))}</td><td>→</td>
+   <td><span class="big">${esc(st.map(stepLabel).join(' , '))}</span></td><td class="big">${esc(gives)}</td>
+   <td style="text-align:right;white-space:nowrap"><button data-edit="${i}">Edit</button> <button data-del="${i}">Delete</button></td></tr>`;
+ }).join('')||'<tr><td colspan="6" class="hint">No mappings yet.</td></tr>';
+ const dups=Object.values(seen).filter(n=>n>1).length;
+ $('#ruleStat').textContent=`${M.rules.length} rule(s)`+(dups?` · ${dups} duplicate source combo(s) highlighted in red`:'')+(conditions()?'':' · no device filter: rules apply to every keyboard, including the MacBook\'s');
+ $('#raw').textContent=JSON.stringify(M,null,2);
+}
+function renderCfg(){
+ $('#devOnly').checked=!!C.deviceOnly;
+ $('#devList').textContent=C.devices.map(d=>`${d.vendor_id}:${d.product_id}`).join(', ')||'none';
+ $('#right_command').value=C.right_command||'right_command';
+ $('#assetPath').textContent=assetPath;
+ [...$('#inmode').children].forEach(b=>b.classList.toggle('on',b.dataset.m===inMode));
+}
+function render(){renderMk();renderMac();renderComposer();renderRules();renderCfg();$('#msg').textContent=msgT.t}
+
+/* ---------- actions ---------- */
+function pickSource(id){
+ if(id==='mk_logo'||id==='knob'){setMsg('That key is handled by the keyboard firmware; macOS does not see it.','warn');return}
+ if(isMod(id)&&src.id&&!isMod(src.id)){
+  const t=srcModToken(id);src.mods=src.mods.includes(t)?src.mods.filter(m=>m!==t):[...src.mods,t];
+ }else{
+  src={id,mods:isMod(id)?[]:layerMods()};
+  const ri=ruleFor(code(id),src.mods);
+  if(ri>=0){loadRule(ri);return}
+  editIdx=null;steps=[{mods:[]}];cur=0;anyMods=false;lastChar='';
+ }
+ const ri=ruleFor(code(src.id),src.mods);
+ if(ri>=0&&ri!==editIdx)setMsg('This combo already has a rule — saving will replace it.','warn');else setMsg('');
+ render();
+}
+function pickTarget(id){
+ const st=steps[cur];
+ const fIdx=/^f\d+$/.test(id)?+id.slice(1)-1:-1;
+ if(isMod(id)&&!(src.id&&isMod(src.id))){
+  const t=macModToken(id);st.mods=st.mods.includes(t)?st.mods.filter(m=>m!==t):[...st.mods,t];
+  if(st.special&&t==='fn'){st.kc='f'+(MACF.findIndex(f=>f[1]===st.special[1])+1);delete st.special;st.mods=st.mods.filter(m=>m!=='fn')}
+ }else if(fIdx>=0&&!st.mods.includes('fn')){
+  steps[cur]={special:[MACF[fIdx][0],MACF[fIdx][1]],mods:[]};
+ }else{
+  st.kc=id;delete st.special;if(fIdx>=0)st.mods=st.mods.filter(m=>m!=='fn');
+ }
+ lastChar='';render();
+}
+function loadRule(i){
+ const p=parseRule(M.rules[i]);
+ src={id:mkIdFromCodeOrId(p.kc),mods:[...p.mods]};
+ steps=fromEventsTo(p.to);if(!steps.length)steps=[{mods:[]}];cur=0;anyMods=p.any;editIdx=i;lastChar='';
+ if(isMod(src.id))viewLayer='base';else{const l=mkLayerOf(p.mods);if(l>=0)viewLayer=['base','shift','right_command'][l]}
+ setMsg('');render();
+}
+function clearComposer(){src={id:null,mods:[]};steps=[{mods:[]}];cur=0;editIdx=null;anyMods=false;lastChar='';setMsg('');render()}
+function saveMapping(){
+ if(!src.id)return setMsg('Pick an MK-770 key first.','err');
+ const to=toEvents();
+ if(!to.length)return setMsg('Pick a Mac target key.','err');
+ const rule=makeRule(code(src.id),src.mods,to,anyMods),k=ruleKey(parseRule(rule));
+ if(editIdx!=null)M.rules[editIdx]=rule;else M.rules.push(rule);
+ const keep=editIdx!=null?editIdx:M.rules.length-1;
+ M.rules=M.rules.filter((r,i)=>i===keep||ruleKey(parseRule(r))!==k);
+ persist();editIdx=null;steps=[{mods:[]}];cur=0;lastChar='';
+ setMsg('Saved: '+rule.description,'ok');render();
+}
+
+/* ---------- keyboard input ---------- */
+const C2K={Minus:'hyphen',Equal:'equal_sign',BracketLeft:'open_bracket',BracketRight:'close_bracket',Backslash:'backslash',
+ Semicolon:'semicolon',Quote:'quote',Comma:'comma',Period:'period',Slash:'slash',Backquote:'grave_accent_and_tilde',
+ IntlBackslash:'non_us_backslash',Space:'spacebar',Enter:'return_or_enter',Tab:'tab',Backspace:'delete_or_backspace',
+ Escape:'escape',Delete:'delete_forward',Insert:'insert',Help:'insert',PageUp:'page_up',PageDown:'page_down',Home:'home',End:'end',
+ ArrowLeft:'left_arrow',ArrowRight:'right_arrow',ArrowUp:'up_arrow',ArrowDown:'down_arrow',CapsLock:'caps_lock',
+ ShiftLeft:'left_shift',ShiftRight:'right_shift',ControlLeft:'left_control',ControlRight:'right_control',
+ AltLeft:'left_option',AltRight:'right_option',MetaLeft:'left_command',MetaRight:'right_command',Fn:'fn',
+ NumLock:'keypad_num_lock',NumpadDivide:'keypad_slash',NumpadMultiply:'keypad_asterisk',NumpadSubtract:'keypad_hyphen',
+ NumpadAdd:'keypad_plus',NumpadEnter:'keypad_enter',NumpadDecimal:'keypad_period'};
+'abcdefghijklmnopqrstuvwxyz'.split('').forEach(c=>C2K['Key'+c.toUpperCase()]=c);
+for(let i=0;i<=9;i++){C2K['Digit'+i]=String(i);C2K['Numpad'+i]='keypad_'+i}
+for(let i=1;i<=12;i++)C2K['F'+i]='f'+i;
+
+addEventListener('keydown',e=>{
+ if(inMode==='off'||e.target.closest('input,textarea,select'))return;
+ const kc=C2K[e.code];
+ if(inMode==='source'){
+  if(!kc)return setMsg(`Unknown key (${e.code}). Click it on the layout instead.`,'warn');
+  e.preventDefault();
+  const id=mkIdByCode(kc);
+  if(!id)return setMsg(`No MK-770 key is set to send "${kc}". Check EventViewer.`,'warn');
+  pickSource(id);return;
+ }
+ // target: record a combo pressed on the MacBook
+ const modOnly=/^(Shift|Alt|Control|Meta|CapsLock|Fn)/.test(e.code);
+ if(modOnly&&!(src.id&&isMod(src.id)))return;
+ if(!kc)return setMsg(`Unknown key (${e.code}). Click it on the layout instead.`,'warn');
+ e.preventDefault();
+ if(modOnly){steps[cur]={kc,mods:[]};render();return}
+ const mods=[];if(e.ctrlKey)mods.push('left_control');if(e.altKey)mods.push('left_option');if(e.shiftKey)mods.push('left_shift');if(e.metaKey)mods.push('left_command');
+ steps[cur]={kc,mods};
+ lastChar=e.key==='Dead'?'dead key — add “+ Space” to type it':(e.key.length===1?e.key:'');
+ render();
+},true);
+
+/* ---------- events ---------- */
+document.addEventListener('click',ev=>{
+ const t=ev.target;
+ const rmS=t.closest('[data-rm-src]');if(rmS){src.mods=src.mods.filter(m=>m!==rmS.dataset.rmSrc);render();return}
+ const rmT=t.closest('[data-rm-step]');if(rmT){steps.splice(+rmT.dataset.rmStep,1);cur=Math.min(cur,steps.length-1);render();return}
+ const mk=t.closest('[data-mk]');if(mk)return pickSource(mk.dataset.mk);
+ const mac=t.closest('[data-mac]');if(mac)return pickTarget(mac.dataset.mac);
+ const sp=t.closest('[data-step]');if(sp){cur=+sp.dataset.step;render();return}
+ const ly=t.closest('#layer [data-l]');if(ly){viewLayer=ly.dataset.l;if(src.id&&!isMod(src.id)&&editIdx==null)src.mods=layerMods();render();return}
+ const im=t.closest('#inmode [data-m]');if(im){inMode=im.dataset.m;render();return}
+ const ed=t.closest('[data-edit]');if(ed)return loadRule(+ed.dataset.edit);
+ const de=t.closest('[data-del]');if(de){const i=+de.dataset.del;M.rules.splice(i,1);if(editIdx===i)editIdx=null;else if(editIdx>i)editIdx--;persist();render();return}
+});
+$('#save').onclick=saveMapping;
+$('#clear').onclick=clearComposer;
+$('#addStep').onclick=()=>{steps.push({mods:[]});cur=steps.length-1;render()};
+$('#addSpace').onclick=()=>{if(!steps[cur].kc&&!steps[cur].special)steps[cur]={kc:'spacebar',mods:[]};else{steps.push({kc:'spacebar',mods:[]})}cur=steps.length-1;render()};
+$('#anyMods').onchange=e=>{anyMods=e.target.checked};
+$('#filter').oninput=renderRules;
+$('#devOnly').onchange=e=>{C.deviceOnly=e.target.checked;persistConfig()};
+$('#right_command').onchange=e=>{C.right_command=e.target.value.trim()||'right_command';persistConfig()};
+document.addEventListener('change',e=>{
+ if(e.target.id==='kc'&&src.id){const v=e.target.value.trim();if(v&&v!==src.id)C.codes[src.id]=v;else delete C.codes[src.id];persistConfig()}
+});
+// "Add your own rule" takes a single {description, manipulators} object, not the {title, rules} asset file
+const oneRule=()=>({description:M.title,manipulators:M.rules.flatMap(r=>r.manipulators||[])});
+$('#copyRule').onclick=async()=>{
+ const rule=oneRule();
+ try{
+  await navigator.clipboard.writeText(JSON.stringify(rule,null,2));
+  setMsg(`Copied ${rule.manipulators.length} manipulator(s) as one rule. Karabiner → Complex Modifications → Add your own rule → paste.`,'ok');
+ }catch(e){setMsg('Clipboard failed: '+e.message,'err')}
+};
+$('#download').onclick=()=>{
+ const url=URL.createObjectURL(new Blob([JSON.stringify(oneRule(),null,2)+'\n'],{type:'application/json'}));
+ const a=document.createElement('a');a.href=url;a.download='mk770-rule.json';a.click();
+ setTimeout(()=>URL.revokeObjectURL(url),1000);
+};
+$('#install').onclick=async()=>{
+ try{
+  const r=await fetch('/api/install',{method:'POST'});const j=await r.json();
+  if(!r.ok)throw new Error(j.error);
+  setMsg('Copied to '+j.path+'. Now: Karabiner → Complex Modifications → Add predefined rule.','ok');
+ }catch(e){setMsg('Copy failed: '+e.message,'err')}
+};
+
+(async()=>{
+ try{
+  const s=await (await fetch('/api/state')).json();
+  M=s.mappings;C={deviceOnly:true,...s.config};C.codes=C.codes||{};assetPath=s.karabinerAsset;
+  const before=JSON.stringify(M);normalize();
+  if(JSON.stringify(M)!==before)persist();else setStatus('loaded mappings.json','ok');
+ }catch(e){setStatus('server not reachable — run: node server.js','err')}
+ render();
+})();
+</script>
+</body>
+</html>

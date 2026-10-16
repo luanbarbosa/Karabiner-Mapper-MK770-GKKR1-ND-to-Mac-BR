@@ -1,0 +1,405 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MK-770 → Mac key mapper</title>
+<style>
+:root{--bg:#14161a;--p:#1c1f26;--b:#2d323c;--t:#e6e8ee;--m:#8b93a3;--ac:#7c5cff;--ok:#2fbf71;--bad:#ff6b6b}
+*{box-sizing:border-box}
+body{margin:0 auto;max-width:1100px;padding:20px;background:var(--bg);color:var(--t);font:14px/1.45 system-ui,-apple-system,sans-serif}
+h1{font-size:20px;margin:0 0 4px}h2{font-size:15px;margin:0 0 10px}
+.p{background:var(--p);border:1px solid var(--b);border-radius:10px;padding:14px;margin:14px 0}
+.hint{color:var(--m);font-size:13px;margin:4px 0}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+label{color:var(--m);font-size:13px}
+input,select,textarea,button{font:inherit;color:var(--t);background:#242833;border:1px solid var(--b);border-radius:6px;padding:6px 10px}
+button{cursor:pointer}button:hover{border-color:var(--ac)}
+button.pri{background:var(--ac);border-color:var(--ac);color:#fff}
+input[type=number]{width:110px}
+#kbwrap{overflow-x:auto;padding-bottom:6px}
+#kb{position:relative;margin:4px 0}
+.key{position:absolute;border:1px solid #3a4050;border-radius:6px;background:#232733;cursor:pointer;overflow:hidden;font-size:12px;color:#cfd3dc}
+.key:hover{border-color:var(--ac)}
+.key.sel{outline:2px solid var(--ac);background:#2d2a52}
+.key.mapped{border-color:var(--ok);background:#1f3128}
+.key.sel.mapped{background:#2a3d4a}
+.key.x{opacity:.45;cursor:not-allowed}
+.key .c{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:12px}
+.key .s{position:absolute;top:3px;left:6px;font-size:11px;color:#aab;font-style:normal}
+.key .b{position:absolute;left:6px;bottom:3px;font-size:15px;font-weight:600}
+.key .b.mid{left:0;right:0;text-align:center}
+.key .a{position:absolute;right:5px;bottom:3px;font-size:11px;color:#8fc8ff;font-style:normal}
+.lrow{display:grid;grid-template-columns:90px 50px 1fr auto auto auto;gap:8px;align-items:center;padding:8px;border:1px solid var(--b);border-radius:8px;margin:6px 0}
+.lrow.rec{border-color:var(--ac);background:#2a2650}
+.lrow .leg{font-size:20px;font-weight:600;text-align:center}
+.lrow .cur{color:var(--m)}.lrow .cur.set{color:var(--ok)}
+.msg{margin:6px 0;color:var(--bad);min-height:1.2em}
+.wiz{border:1px solid var(--ac);background:#2a2650;border-radius:8px;padding:10px;margin-bottom:10px}
+.wiz big{font-size:22px;font-weight:700}
+#out{width:100%;height:260px;font:12px/1.4 ui-monospace,Menlo,monospace}
+ol{margin:6px 0 0 18px;padding:0}li{margin:3px 0}
+code{background:#242833;padding:1px 5px;border-radius:4px}
+</style>
+</head>
+<body>
+<h1>MK-770 (Nordic) → Mac key mapper</h1>
+<div class="hint">Makes every key on the Cooler Master MK-770 type what its keycap says on your Mac. Everything runs locally in this page.</div>
+
+<div class="p">
+<h2>1 · Setup</h2>
+<ol>
+<li>Open Karabiner-Elements → <b>Devices</b>, find the MK-770 and note its Vendor ID and Product ID. Entering them makes the rules apply only to this keyboard, so the MacBook's own keys stay untouched.</li>
+<li>Keep the MK-770 plugged in but do the recording (step 3) on the <b>MacBook's built-in keyboard</b>.</li>
+</ol>
+<div class="row" style="margin-top:10px">
+<label>Vendor ID <input type="number" id="vid" placeholder="e.g. 9494"></label>
+<label>Product ID <input type="number" id="pid" placeholder="from Karabiner"></label>
+<label>AltGr key (3rd layer) <select id="altgr">
+<option value="right_option">right_option (right ⌘|Alt key)</option>
+<option value="right_command">right_command</option>
+<option value="right_control">right_control</option>
+</select></label>
+</div>
+</div>
+
+<div class="p">
+<h2>2 · MK-770 keys</h2>
+<div class="hint">Click a key to edit it. Green = has a mapping. Top-left = Shift legend, bottom-left = base, bottom-right = AltGr.</div>
+<div id="kbwrap"><div id="kb"></div></div>
+</div>
+
+<div class="p">
+<h2>3 · Map the selected key</h2>
+<div id="wiz"></div>
+<div class="row" style="margin-bottom:8px">
+<button class="pri" id="startWiz">Start guided walkthrough (unmapped characters)</button>
+<button id="fRow">Apply Mac-style F-row</button>
+<button id="modSwap">Swap ⌥/⌘ to match keycaps</button>
+<button id="resetAll">Reset everything</button>
+</div>
+<div class="msg" id="msg"></div>
+<div id="editor"></div>
+</div>
+
+<div class="p">
+<h2>4 · Karabiner JSON</h2>
+<textarea id="out" readonly></textarea>
+<div class="row" style="margin-top:8px">
+<button class="pri" id="copy">Copy</button>
+<button id="dl">Download .json</button>
+<span class="hint" id="stat"></span>
+</div>
+<ol>
+<li>Save it as <code>~/.config/karabiner/assets/complex_modifications/mk770-nordic-to-mac.json</code></li>
+<li>Karabiner-Elements → Complex Modifications → <b>Add predefined rule</b> → enable the rules.</li>
+<li>Test below with the MK-770:</li>
+</ol>
+<textarea id="test" style="width:100%;height:70px" placeholder="Type here on the MK-770: å ä ö @ £ $ { [ ] } \ | ~ ^ ¨ ´ ` < > ; : _ -"></textarea>
+</div>
+
+<script>
+const U=42;
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+// id (Karabiner key_code the MK-770 sends) : [cap, base, shift, altgr]
+const KD={
+ grave_accent_and_tilde:['§','§','½',''],
+ '1':['1','1','!',''],'2':['2','2','"','@'],'3':['3','3','#','£'],'4':['4','4','¤','$'],
+ '5':['5','5','%',''],'6':['6','6','&',''],'7':['7','7','/','{'],'8':['8','8','(','['],
+ '9':['9','9',')',']'],'0':['0','0','=','}'],
+ hyphen:['+','+','?','\\'],equal_sign:['´','´','`',''],
+ open_bracket:['å','å','Å',''],close_bracket:['¨','¨','^','~'],
+ semicolon:['ö','ö','Ö',''],quote:['ä','ä','Ä',''],non_us_pound:["'","'",'*',''],
+ non_us_backslash:['<','<','>','|'],
+ comma:[',',',',';',''],period:['.','.',':',''],slash:['-','-','_','']
+};
+'qwertyuiopasdfghjklzxcvbnm'.split('').forEach(c=>KD[c]=[c.toUpperCase(),c,c.toUpperCase(),'']);
+KD.e[3]='€';
+
+const CAP={escape:'Esc',delete_forward:'Del',insert:'Ins',page_up:'PgUp',page_down:'PgDn',
+ delete_or_backspace:'⌫',tab:'Tab',return_or_enter:'↵',caps_lock:'Caps',left_shift:'⇧',right_shift:'⇧',
+ left_control:'Ctrl',left_command:'⌥ | Win',left_option:'⌘ | Alt',spacebar:'Space',right_option:'⌘ | Alt',
+ fn_logo:'◇ (fw)',right_control:'Ctrl',left_arrow:'←',right_arrow:'→',up_arrow:'↑',down_arrow:'↓',
+ keypad_num_lock:'Num',keypad_slash:'/',keypad_asterisk:'*',keypad_hyphen:'−',keypad_plus:'+',
+ keypad_enter:'Enter',keypad_period:'.'};
+for(let i=1;i<=12;i++)CAP['f'+i]='F'+i;
+for(let i=0;i<=9;i++)CAP['keypad_'+i]=String(i);
+
+const ROWS=[
+ 'escape:1 f1:1 f2:1 f3:1 f4:1 f5:1 f6:1 f7:1 f8:1 f9:1 f10:1 f11:1 f12:1 delete_forward:1 insert:1 0.25 page_up:1 page_down:1',
+ 'grave_accent_and_tilde:1 1:1 2:1 3:1 4:1 5:1 6:1 7:1 8:1 9:1 0:1 hyphen:1 equal_sign:1 delete_or_backspace:2 3.5 keypad_num_lock:1 keypad_slash:1 keypad_asterisk:1 keypad_hyphen:1',
+ 'tab:1.5 q:1 w:1 e:1 r:1 t:1 y:1 u:1 i:1 o:1 p:1 open_bracket:1 close_bracket:1 0.25 return_or_enter:1.25:2 3.5 keypad_7:1 keypad_8:1 keypad_9:1 keypad_plus:1:2',
+ 'caps_lock:1.75 a:1 s:1 d:1 f:1 g:1 h:1 j:1 k:1 l:1 semicolon:1 quote:1 non_us_pound:1 4.75 keypad_4:1 keypad_5:1 keypad_6:1',
+ 'left_shift:1.25 non_us_backslash:1 z:1 x:1 c:1 v:1 b:1 n:1 m:1 comma:1 period:1 slash:1 right_shift:2.75 1.25 up_arrow:1 1.25 keypad_1:1 keypad_2:1 keypad_3:1 keypad_enter:1:2',
+ 'left_control:1.25 left_command:1.25 left_option:1.25 spacebar:6.25 right_option:1.25 fn_logo:1.25 right_control:1.25 1.5 left_arrow:1 down_arrow:1 right_arrow:1 0.25 keypad_0:2 keypad_period:1'
+];
+const KEYS=[];
+ROWS.forEach((r,ri)=>{let x=0;const y=ri*U+(ri?12:0);
+ r.split(' ').forEach(t=>{
+  if(!t.includes(':')){x+=+t;return;}
+  const [id,w,h]=t.split(':');KEYS.push({id,x:x*U,y,w:+w*U,h:(+(h||1))*U});x+=+w;
+ });
+});
+$('#kb').style.height=(6*U+12)+'px';$('#kb').style.width=(22.5*U)+'px';
+
+function kindOf(id){
+ if(id==='fn_logo')return 'x';
+ if(/^[a-z]$/.test(id))return 'letter';
+ if(/^[0-9]$/.test(id))return 'digit';
+ if(/^f\d+$/.test(id))return 'fn';
+ if(['left_control','left_command','left_option','right_option','right_control','left_shift','right_shift','caps_lock'].includes(id))return 'mod';
+ if(id.startsWith('keypad_'))return 'pad';
+ if(KD[id])return 'sym';
+ return 'nav';
+}
+
+// Mac-side special targets
+const SPECIAL=[
+ ['Brightness −',{consumer_key_code:'display_brightness_decrement'}],
+ ['Brightness +',{consumer_key_code:'display_brightness_increment'}],
+ ['Mission Control',{apple_vendor_keyboard_key_code:'mission_control'}],
+ ['Spotlight',{apple_vendor_keyboard_key_code:'spotlight'}],
+ ['Launchpad',{apple_vendor_keyboard_key_code:'launchpad'}],
+ ['Dictation (newer Karabiner)',{consumer_key_code:'dictation'}],
+ ['Do Not Disturb (newer Karabiner)',{consumer_key_code:'do_not_disturb'}],
+ ['Rewind',{consumer_key_code:'rewind'}],
+ ['Play / Pause',{consumer_key_code:'play_or_pause'}],
+ ['Fast-forward',{consumer_key_code:'fast_forward'}],
+ ['Mute',{consumer_key_code:'mute'}],
+ ['Volume −',{consumer_key_code:'volume_decrement'}],
+ ['Volume +',{consumer_key_code:'volume_increment'}],
+ ['Fn',{key_code:'fn'}],
+ ['left_command',{key_code:'left_command'}],['left_option',{key_code:'left_option'}],
+ ['left_control',{key_code:'left_control'}],['left_shift',{key_code:'left_shift'}],
+ ['right_command',{key_code:'right_command'}],['right_option',{key_code:'right_option'}],
+ ['right_control',{key_code:'right_control'}],['caps_lock',{key_code:'caps_lock'}]
+];
+const sp=n=>SPECIAL.findIndex(s=>s[0]===n);
+
+// Browser KeyboardEvent.code -> Karabiner key_code (Mac keyboard side)
+const C2K={Minus:'hyphen',Equal:'equal_sign',BracketLeft:'open_bracket',BracketRight:'close_bracket',
+ Backslash:'backslash',Semicolon:'semicolon',Quote:'quote',Comma:'comma',Period:'period',Slash:'slash',
+ Backquote:'grave_accent_and_tilde',IntlBackslash:'non_us_backslash',IntlRo:'international1',IntlYen:'international3',
+ Space:'spacebar',Enter:'return_or_enter',Tab:'tab',Backspace:'delete_or_backspace'};
+'abcdefghijklmnopqrstuvwxyz'.split('').forEach(c=>C2K['Key'+c.toUpperCase()]=c);
+for(let i=0;i<=9;i++)C2K['Digit'+i]=String(i);
+
+const LAYERS=[['base',1,'Base'],['shift',2,'⇧ Shift'],['altgr',3,'AltGr']];
+const MODSYM={left_control:'⌃',left_option:'⌥',left_shift:'⇧',left_command:'⌘'};
+
+let S;try{S=JSON.parse(localStorage.mk770||'null')}catch(e){}
+S=S||{map:{},codes:{},vid:'',pid:'',altgr:'right_option'};
+let sel=null,rec=null,wiz=null,last=null,msgTxt='';
+const save=()=>{try{localStorage.mk770=JSON.stringify(S)}catch(e){}};
+const legend=(id,l)=>{const k=KD[id];return k?k[LAYERS.find(x=>x[0]===l)[1]]:''};
+
+function setMsg(t){msgTxt=t;$('#msg').textContent=t}
+
+function renderKb(){
+ $('#kb').innerHTML=KEYS.map(k=>{
+  const kd=KD[k.id],kind=kindOf(k.id),m=S.map[k.id]||{};
+  const mapped=Object.keys(m).length>0;
+  let inner;
+  if(kd&&kind!=='mod'){
+   if(kind==='letter')inner=`<span class="b mid">${esc(kd[2])}</span>`+(kd[3]?`<i class="a">${esc(kd[3])}</i>`:'');
+   else inner=`<i class="s">${esc(kd[2])}</i><span class="b">${esc(kd[1])}</span>`+(kd[3]?`<i class="a">${esc(kd[3])}</i>`:'');
+  }else inner=`<span class="c">${esc(CAP[k.id]||k.id)}</span>`;
+  return `<div class="key ${kind==='x'?'x':''} ${mapped?'mapped':''} ${sel===k.id?'sel':''}" data-id="${k.id}" title="${k.id}" style="left:${k.x}px;top:${k.y}px;width:${k.w-4}px;height:${k.h-4}px">${inner}</div>`;
+ }).join('');
+}
+
+function specialOptions(){
+ return '<option value="">special target…</option>'+SPECIAL.map((s,i)=>`<option value="${i}">${esc(s[0])}</option>`).join('');
+}
+
+function renderEditor(){
+ const box=$('#editor');
+ if(!sel){box.innerHTML='<div class="hint">Click a key in the layout above, or start the guided walkthrough.</div>';return}
+ const id=sel,kd=KD[id],kind=kindOf(id);
+ if(kind==='x'){box.innerHTML='<div class="hint">The Cooler Master logo key is most likely handled in the keyboard firmware (Fn), so macOS and Karabiner never see it. Check Karabiner EventViewer by pressing it; if nothing shows, it cannot be remapped.</div>';return}
+ const layers=LAYERS.filter(l=>l[0]==='base'||(kd&&kd[l[1]]));
+ const m=S.map[id]||{};
+ let h=`<div class="row" style="margin-bottom:6px"><b>${esc(CAP[id]||(kd?kd[1]:id))}</b>
+  <label>Karabiner key_code (from) <input id="kc" value="${esc(S.codes[id]||id)}" style="width:210px"></label>
+  <span class="hint">Verify with Karabiner EventViewer if a key misbehaves.</span></div>`;
+ layers.forEach(([l,idx,name])=>{
+  const e=m[l],isRec=rec&&rec.id===id&&rec.layer===l;
+  h+=`<div class="lrow ${isRec?'rec':''}">
+   <div>${name}</div>
+   <div class="leg">${esc(kd?kd[idx]:CAP[id]||id)}</div>
+   <div class="cur ${e?'set':''}">${e?esc(e.shown):'pass-through'}</div>
+   <button data-a="rec" data-l="${l}">${isRec?'Press combo… (Esc cancels)':'Record'}</button>
+   <select data-a="spec" data-l="${l}">${specialOptions()}</select>
+   <button data-a="clr" data-l="${l}">Clear</button>
+  </div>`;
+ });
+ if(last&&rec&&last.mismatch)h+=`<button data-a="accept">Accept “${esc(last.ch)}” anyway</button>`;
+ box.innerHTML=h;
+}
+
+function renderWiz(){
+ const w=$('#wiz');
+ if(!wiz){w.innerHTML='';return}
+ const it=wiz.q[wiz.i];
+ const nm=LAYERS.find(l=>l[0]===it.l)[2];
+ w.innerHTML=`<div class="wiz"><div class="hint">Step ${wiz.i+1} of ${wiz.q.length} · use the MacBook's own keyboard</div>
+  <div>Press the combo that types <big>${esc(legend(it.id,it.l))}</big> <span class="hint">(MK-770: ${esc(nm)} on the “${esc(KD[it.id][1])}” key)</span></div>
+  <div class="row" style="margin-top:8px"><button data-w="skip">Skip (pass-through)</button><button data-w="back">Back</button><button data-w="stop">Stop</button></div></div>`;
+}
+
+function toArr(e){
+ if(e.kind==='special')return [e.to];
+ const a=[],o={key_code:e.kc};
+ if(e.mods.length)o.modifiers=e.mods;
+ a.push(o);if(e.space)a.push({key_code:'spacebar'});
+ return a;
+}
+
+function build(){
+ const code=id=>S.codes[id]||id;
+ const v=parseInt($('#vid').value),p=parseInt($('#pid').value);
+ const cond=v?[{type:'device_if',identifiers:[p?{vendor_id:v,product_id:p}:{vendor_id:v}]}]:null;
+ const G={chars:[],mods:[],fn:[]};
+ KEYS.forEach(k=>{
+  const id=k.id,m=S.map[id];if(!m||id==='fn_logo')return;
+  const kind=kindOf(id),g=kind==='mod'?'mods':kind==='fn'?'fn':'chars';
+  ['altgr','shift','base'].forEach(l=>{
+   const e=m[l];if(!e)return;
+   if(e.kind==='combo'&&e.kc===code(id)&&!e.space){
+    const want=l==='shift'?'left_shift':l==='base'?'':null;
+    if(want!==null&&e.mods.join()===want)return;
+   }
+   const from={key_code:code(id)};
+   if(g!=='mods')from.modifiers=l==='base'?{optional:['any']}:{mandatory:[l==='shift'?'shift':S.altgr],optional:['any']};
+   const man={type:'basic',from,to:toArr(e)};
+   if(cond)man.conditions=cond;
+   G[g].push(man);
+  });
+ });
+ const rules=[];
+ [['chars','MK-770: characters (Nordic keycaps → Mac layout)'],['mods','MK-770: modifier keys'],['fn','MK-770: function row']]
+  .forEach(([g,d])=>G[g].length&&rules.push({description:d,manipulators:G[g]}));
+ return {title:'MK-770 Nordic → Mac',rules};
+}
+
+function renderOut(){
+ const o=build();
+ $('#out').value=JSON.stringify(o,null,2);
+ const n=o.rules.reduce((a,r)=>a+r.manipulators.length,0);
+ $('#stat').textContent=`${n} manipulators in ${o.rules.length} rule(s)`+(($('#vid').value)?'':' · no device filter set (rules apply to ALL keyboards)');
+}
+
+function render(){renderKb();renderEditor();renderWiz();renderOut();$('#msg').textContent=msgTxt}
+
+function commit(e){
+ const {id,layer}=rec;
+ (S.map[id]=S.map[id]||{})[layer]=e;
+ save();last=null;setMsg('');
+ if(wiz){wizNext(1)}else{rec=null}
+ render();
+}
+
+function wizStart(){
+ const q=[];
+ KEYS.forEach(k=>{
+  const kind=kindOf(k.id);if(!['sym','letter','digit'].includes(kind))return;
+  LAYERS.forEach(([l,idx])=>{
+   if(!KD[k.id][idx])return;
+   if(l==='base'&&(kind==='letter'||kind==='digit'))return;
+   if(l==='shift'&&kind==='letter')return;
+   if(S.map[k.id]&&S.map[k.id][l])return;
+   q.push({id:k.id,l});
+  });
+ });
+ if(!q.length){setMsg('Nothing left to map in the walkthrough.');render();return}
+ wiz={q,i:0};sel=q[0].id;rec={id:q[0].id,layer:q[0].l};last=null;setMsg('');render();
+}
+function wizNext(d){
+ wiz.i+=d;last=null;
+ if(wiz.i<0)wiz.i=0;
+ if(wiz.i>=wiz.q.length){wiz=null;rec=null;setMsg('Walkthrough finished.');return}
+ const it=wiz.q[wiz.i];sel=it.id;rec={id:it.id,layer:it.l};
+}
+
+addEventListener('keydown',e=>{
+ if(!rec)return;
+ if(/^(Shift|Alt|Control|Meta|CapsLock)/.test(e.code))return;
+ e.preventDefault();e.stopPropagation();
+ if(e.code==='Escape'&&!e.shiftKey&&!e.altKey&&!e.ctrlKey&&!e.metaKey){rec=null;wiz=null;last=null;setMsg('');render();return}
+ const kc=C2K[e.code];
+ if(!kc){setMsg('That key ('+e.code+') is not supported as a target here. Use the "special target" dropdown instead.');render();return}
+ const mods=[];
+ if(e.ctrlKey)mods.push('left_control');
+ if(e.altKey)mods.push('left_option');
+ if(e.shiftKey)mods.push('left_shift');
+ if(e.metaKey)mods.push('left_command');
+ const dead=e.key==='Dead',ch=e.key.length===1?e.key:'';
+ const keyName=e.code.replace(/^Key|^Digit/,'');
+ const shown=mods.map(m=>MODSYM[m]).join('')+' '+keyName+(dead?'  → dead key + Space':ch?'  → “'+ch+'”':'');
+ const exp=legend(rec.id,rec.layer);
+ last={kind:'combo',kc,mods,space:dead,shown:shown.trim(),ch};
+ if(exp&&!dead&&ch&&ch!==exp){
+  last.mismatch=true;
+  setMsg('That types “'+ch+'” but this key should type “'+exp+'”. Try another combo, or accept it anyway.');
+  render();return;
+ }
+ commit(last);
+},true);
+
+document.addEventListener('click',ev=>{
+ const k=ev.target.closest('.key');
+ if(k&&$('#kb').contains(k)){
+  if(k.classList.contains('x')){sel=k.dataset.id;rec=null;wiz=null;render();return}
+  sel=k.dataset.id;rec=null;wiz=null;last=null;setMsg('');render();return;
+ }
+ const b=ev.target.closest('button[data-a],button[data-w]');
+ if(!b)return;
+ if(b.dataset.w){
+  if(b.dataset.w==='skip')wizNext(1);
+  if(b.dataset.w==='back')wizNext(-1);
+  if(b.dataset.w==='stop'){wiz=null;rec=null;}
+  setMsg('');render();return;
+ }
+ const a=b.dataset.a,l=b.dataset.l;
+ if(a==='rec'){rec={id:sel,layer:l};wiz=null;last=null;setMsg('');render();}
+ if(a==='clr'){if(S.map[sel]){delete S.map[sel][l];if(!Object.keys(S.map[sel]).length)delete S.map[sel];}save();render();}
+ if(a==='accept'&&last){commit({kind:'combo',kc:last.kc,mods:last.mods,space:last.space,shown:last.shown});}
+});
+document.addEventListener('change',ev=>{
+ const t=ev.target;
+ if(t.matches('select[data-a=spec]')&&t.value!==''){
+  const s=SPECIAL[+t.value];
+  (S.map[sel]=S.map[sel]||{})[t.dataset.l]={kind:'special',to:s[1],shown:'special: '+s[0]};
+  save();render();
+ }
+ if(t.id==='kc'){const v=t.value.trim();if(v&&v!==sel)S.codes[sel]=v;else delete S.codes[sel];save();render();}
+ if(t.id==='altgr'){S.altgr=t.value;save();render();}
+});
+['vid','pid'].forEach(i=>$('#'+i).addEventListener('input',()=>{S[i]=$('#'+i).value;save();renderOut();}));
+
+$('#startWiz').onclick=wizStart;
+$('#fRow').onclick=()=>{
+ const names=['Brightness −','Brightness +','Mission Control','Spotlight','Dictation (newer Karabiner)','Do Not Disturb (newer Karabiner)','Rewind','Play / Pause','Fast-forward','Mute','Volume −','Volume +'];
+ names.forEach((n,i)=>{S.map['f'+(i+1)]={base:{kind:'special',to:SPECIAL[sp(n)][1],shown:'special: '+n}}});
+ save();setMsg('F1–F12 now send the Mac media/system keys. Hold Fn if your MK-770 needs it for the F-keys themselves.');render();
+};
+$('#modSwap').onclick=()=>{
+ S.map.left_command={base:{kind:'special',to:{key_code:'left_option'},shown:'special: left_option'}};
+ S.map.left_option={base:{kind:'special',to:{key_code:'left_command'},shown:'special: left_command'}};
+ save();setMsg('Win-position key → ⌥ and Alt-position key → ⌘ (matches the keycaps). Confirm in EventViewer that those physical keys really send left_command / left_option first.');render();
+};
+$('#resetAll').onclick=()=>{if(confirm('Clear all mappings?')){S.map={};S.codes={};save();sel=null;rec=null;wiz=null;setMsg('');render();}};
+$('#copy').onclick=async()=>{try{await navigator.clipboard.writeText($('#out').value);setMsg('Copied.')}catch(e){$('#out').select();setMsg('Press ⌘C to copy.')}$('#msg').style.color='var(--ok)';setTimeout(()=>$('#msg').style.color='',1500)};
+$('#dl').onclick=()=>{
+ const a=document.createElement('a');
+ a.href=URL.createObjectURL(new Blob([$('#out').value],{type:'application/json'}));
+ a.download='mk770-nordic-to-mac.json';a.click();
+};
+
+$('#vid').value=S.vid||'';$('#pid').value=S.pid||'';$('#altgr').value=S.altgr||'right_option';
+render();
+</script>
+</body>
+</html>
